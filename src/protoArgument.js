@@ -25,7 +25,7 @@ const methodsToPatch = [
 ];
 
 /**遍历methodsToPatch */
-methodsToPatch.forEach(method => {
+methodsToPatch.forEach((method) => {
   /**拦截数组的七个方法，先执行原生方法，在完成新增的响应式功能 */
   Object.defineProperty(arrayMethods, method, {
     value: function (...args) {
@@ -33,6 +33,25 @@ methodsToPatch.forEach(method => {
       const ret = arrayProto[method].apply(this, args);
       /*然后响应式 */
       console.log("array 响应式");
+      /**新增元素列表 */
+      let inserted = [];
+
+      switch (method) {
+        case "push":
+        case "unshift":
+          inserted = args;
+          break;
+        case "splice":
+          inserted = args.slice(2);
+          break;
+      }
+
+      /**如果数组有新增的元素，则对新增的元素进行响应式出 */
+      inserted.length && this.__ob__.observerArray(inserted);
+
+      /**通知依赖更新 */
+      this.__ob__.dep.notify()
+
       return ret;
     },
     configurable: true,

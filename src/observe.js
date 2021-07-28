@@ -1,10 +1,12 @@
 import Observer from "./Observer";
 
+
 /**
  * 通过Observer类为对象设置响应式能力
  * @param {*} value
  */
 export default function observe(value) {
+  
   /**
    * 避免无限递归
    * 当value不是对象直接结束递归
