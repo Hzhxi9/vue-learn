@@ -1,5 +1,4 @@
 const path = require("path");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
   /**开发模式 */
@@ -10,17 +9,15 @@ module.exports = {
   output: {
     filename: "bundle.js",
   },
-  plugins: [new webpack.HotModuleReplacementPlugin()],
   /**配置webpack-dev-server */
   devServer: {
     /**静态文件根目录 */
-    contentBase: path.join(__dirname, "www"),
+    contentBase: path.join(__dirname, "dist"),
     /**不压缩 */
     compress: false,
     /**端口号 */
-    port: 8888,
+    port: 8802,
     /**虚拟打包的路径，bundle.js文件没有真正生成 */
     publicPath: "/xuni/",
-    hot: true,
   },
 };
