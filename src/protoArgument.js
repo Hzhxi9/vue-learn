@@ -31,11 +31,12 @@ methodsToPatch.forEach((method) => {
     value: function (...args) {
       /**执行原生方法 */
       const ret = arrayProto[method].apply(this, args);
+
       /*然后响应式 */
       console.log("array 响应式");
+
       /**新增元素列表 */
       let inserted = [];
-
       switch (method) {
         case "push":
         case "unshift":
@@ -45,12 +46,11 @@ methodsToPatch.forEach((method) => {
           inserted = args.slice(2);
           break;
       }
+      /**如果数组有新增元素，则对新增的元素进行响应式处理 */
+      if (inserted.length) this.__ob__.observeArray(inserted);
 
-      /**如果数组有新增的元素，则对新增的元素进行响应式出 */
-      inserted.length && this.__ob__.observerArray(inserted);
-
-      /**通知依赖更新 */
-      this.__ob__.dep.notify()
+      /**依赖通知更新 */
+      this.__ob__.dep.notify();
 
       return ret;
     },

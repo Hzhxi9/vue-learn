@@ -10,9 +10,9 @@ import Dep from "./Dep";
 export default class Observer {
   constructor(value) {
     /**
-     * 为对象本身设置一个dep，方便在更新对象本身时使用 
-     * 比如数组通知依赖更新时就会用到 
-     **/
+     * 为对象本身设置一个dep,方便在更新对象本身时使用
+     * 比如数组通知依赖更新时就会用到
+     */
     this.dep = new Dep();
 
     this.value = value;

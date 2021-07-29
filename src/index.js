@@ -1,4 +1,5 @@
 import initData from "./initData";
+import mount from "./compiler";
 
 /**
  * Vue构造函数
@@ -24,6 +25,13 @@ Vue.prototype._init = function (options) {
    * 3. 给data对象上各个属性设置响应式
    */
   initData(this);
+
+  /**如果存在el配置项，则调用$mount方法编译模板 */
+  if (this.$options.el) this.$mount();
+};
+
+Vue.prototype.$mount = function () {
+  mount(this);
 };
 
 window.Vue = Vue;
