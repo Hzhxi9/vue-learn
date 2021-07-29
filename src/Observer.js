@@ -3,10 +3,17 @@ import { def } from "./utils";
 import defineReactive from "./defineReactive";
 import protoArgument from "./protoArgument";
 import observe from "./observe";
+import Dep from "./Dep";
 
 /**为普通对象或者数组设置响应式的入口 */
 export default class Observer {
   constructor(value) {
+    /**
+     * 为对象本身设置一个dep,方便在更新对象本身时使用
+     * 比如数组通知依赖更新时就会用到
+     */
+    this.dep = new Dep();
+
     this.value = value;
 
     /**

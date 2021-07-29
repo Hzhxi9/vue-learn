@@ -1,14 +1,20 @@
+import Dep from "./Dep";
 import observe from "./observe";
 
 /**
  * 通过Object.defineReactive为obj.key设置getter, setter
+ * getter时依赖收集
+ * setter时依赖通过watcher更新
+ *
  * @param {*} obj
  * @param {*} key
  * @param {*} value
  */
 export default function defineReactive(obj, key, value) {
   /**递归observe处理value仍然为对象的情况 */
-  observe(value);
+  const childOb = observe(value);
+
+  const dep = new Dep();
 
   Object.defineProperty(obj, key, {
     /**
@@ -16,6 +22,14 @@ export default function defineReactive(obj, key, value) {
      */
     get() {
       console.log(`拦截了getter--key=${key}`);
+      /**
+       * 读取数据时，Dep.target 不为null， 则进行依赖收集
+       */
+      if (Dep.target) {
+        dep.depend();
+        /**存在子ob， 同样进行依赖收集 */
+        if (childOb) childOb.dep.depend();
+      }
       return value;
     },
     /**
@@ -27,8 +41,12 @@ export default function defineReactive(obj, key, value) {
       if (newVal === value) return;
       /**新值替换老值 */
       value = newVal;
+
       /**为新值进行响应式处理 */
       observe(value);
+
+      /**数据更新，让dep通知自己收集的所有watcher执行update方法 */
+      dep.notify();
     },
   });
 }
