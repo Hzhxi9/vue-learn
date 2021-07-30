@@ -1,50 +1,51 @@
-import { def } from "./utils";
-
 import defineReactive from "./defineReactive";
-import protoArgument from "./protoArgument";
+import protoArray from "./protoArray";
 import observe from "./observe";
 import Dep from "./Dep";
 
-/**为普通对象或者数组设置响应式的入口 */
+import { def } from "./utils";
+
 export default class Observer {
   constructor(value) {
     /**
-     * 为对象本身设置一个dep,方便在更新对象本身时使用
-     * 比如数组通知依赖更新时就会用到
+     * 为对象本事设置一个dep,方便在更新对象本身时使用
+     * 比如数组通知依赖更新时使用
      */
     this.dep = new Dep();
 
-    this.value = value;
-
     /**
-     * 为对象设置__ob__属性，值为this，标识当前对象已经是一个响应式对象
-     */
+     * 为对象设置一个__ob__属性，值为this，标识当前对象已经具有响应式能力
+     **/
     def(value, "__ob__", this);
 
+    /**
+     * 判断当前value是数组还是对象
+     */
     if (Array.isArray(value)) {
-      /**数组响应式 */
-      protoArgument(value);
-      this.observeArray(value);
+      /**当前value是数组 */
+
+      /**重写数组原型方法 */
+      protoArray(value);
+
+      /**设置数组响应式 */
+      this.observerArray(value);
     } else {
-      /**对象响应式 */
+      /**当前value是对象 */
       this.walk(value);
     }
   }
 
-  /**
-   * 遍历对象所有属性，给每个属性设置响应式
-   * @param {*} value
-   */
-  walk(value) {
-    for (const key in value) defineReactive(value, key, value[key]);
+  /**遍历对象所有属性，为这些属性设置getter/setter */
+  walk(object) {
+    for (const key in object) defineReactive(object, key, object[key]);
   }
 
   /**
    * 遍历数组的每个元素，为每个元素设置响应式
-   * 为了处理元素为对象的情况，已到达this.arr[index].xx是响应式
-   * @param {*} arr
+   * 这里是为了处理元素为对象的情况，已达到this.arr[index].xx是响应式的目的
+   * @param {*} array
    */
-  observeArray(arr) {
-    for (const value of arr) observe(value);
+  observerArray(array) {
+    for (const value of array) observe(value);
   }
 }
