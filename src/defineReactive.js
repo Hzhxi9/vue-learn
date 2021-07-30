@@ -1,6 +1,7 @@
 import observe from "./observe";
 import Dep from "./Dep";
 
+
 /**
  * 通过 Object.defineReactive 为 object.key 设置 getter， setter
  * getter 依赖收集
