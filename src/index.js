@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-import initData from "./initData";
-import mount from './compiler'
-function Vue(options) {
-=======
 import mount from "./compiler";
 import initData from "./initData";
 
@@ -11,7 +6,6 @@ import initData from "./initData";
  * @param {*} options new Vue 时传递的配置对象
  */
 export default function Vue(options) {
->>>>>>> 49eb5370036a02efe3648058a55b84f47a7ec3ce
   this._init(options);
 }
 
@@ -19,12 +13,6 @@ export default function Vue(options) {
  * 初始化配置对象
  */
 Vue.prototype._init = function (options) {
-<<<<<<< HEAD
-  this.$options = options;
-
-  initData(this);
-
-=======
   /**
    * 将options挂载到Vue是实例上
    */
@@ -37,7 +25,6 @@ Vue.prototype._init = function (options) {
   initData(this);
 
   /**如果存在el配置项，则调用mount方法编译模板 */
->>>>>>> 49eb5370036a02efe3648058a55b84f47a7ec3ce
   if (this.$options.el) this.$mount();
 };
 

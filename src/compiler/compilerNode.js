@@ -1,8 +1,7 @@
-import compilerAttribute from "./compilerAttribute";
+import compilerAttribute from "./compileAttribute";
 import compilerTextNode from "./compilerTextNode";
 
 export default function compilerNode(nodes, vm) {
-  
   for (let i = 0, len = nodes.length; i < len; i++) {
     const node = nodes[i];
     if (node.nodeType === 1) {
