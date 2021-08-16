@@ -1,8 +1,24 @@
-import compilerNode from './compilerNode'
+import compileToFunction from "./compileToFunction";
 
 export default function mount(vm) {
-  const el = document.querySelector(vm.$options.el);
+  /**判断是否存在render选项， 没有提供则编译生成render函数 */
+  if (vm.$options.render) {
+    /**获取模板 */
+    let template = "";
 
-  /**编译节点 */
-  compileNode(Array.from(el.childNodes), vm);
+    if (vm.$options.template) /**模板存在*/ template = vm.$options.template;
+    else if (vm.$options.el) {
+      const el = document.querySelector(el);
+      /**存在挂载点 */
+      template = el.outerHTML();
+      /**在实例上记录挂载点，this._update中会用到 */
+      vm.$el = el;
+    }
+
+    /**生成渲染函数 */
+    const render = compileToFunction(template);
+
+    /**将渲染函数挂载到$options中 */
+    vm.$options.render = render;
+  }
 }
