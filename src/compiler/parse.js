@@ -114,16 +114,117 @@ export default function parse(template) {
    * 处理元素的闭合标签时会调用该方法
    * 进一步处理元素上的各个属性，将处理结果放到 attr 属性上
    */
-  function parseElement() {}
+  function parseElement() {
+    /**弹出栈顶元素， 进一步处理该元素*/
+    const curElement = stack.pop();
+
+    const stackLen = stack.length;
+
+    /**进一步处理AST对象中rawAttr对象{ attrName: attrValue, ... } */
+    const { tag, rawAttr } = curElement;
+
+    /**处理结果都放到attr对象上， 并删掉rawAttr对象中相应的属性 */
+    curElement.attr = {};
+
+    /**属性对象的key组成的数组 */
+    const propertyArr = Object.keys(rawAttr);
+
+    if (propertyArr.includes("v-model")) {
+      /**处理v-model 指令 */
+      processVModel(curElement);
+    } else if (propertyArr.find((property) => property.match(/^v-bind:(.*)/))) {
+      /**处理v-bind指令， 比如<span v-bind:test="xx"></span> */
+      processVBind(curElement, RegExp.$1, rawAttr[`v-bind:${RegEep.$1}`]);
+    } else if (propertyArr.find((property) => property.match(/^v-on:(.*)/))) {
+      /**处理v-on指令， 比如<button v-on:click="add">add</button> */
+      processVOn(curElement, RegExp.$1, rawAttr[`v-on:${RegExp.$1}`]);
+    }
+
+    /**节点处理完以后让其和父节点产生关系 */
+    if (stackLen) {
+      stack[stackLen - 1].children.push(curElement);
+      curElement.parent = stack[stackLen - 1];
+    }
+  }
 }
 
 /**
  * 处理文本
  * @param {*} text
  */
-function processChars(text) {}
+function processChars(text) {
+  /**去除空字符或者换行符 */
+  if (!text.trim()) return;
+
+  /**构造文本节点的AST */
+  const textAst = {
+    type: 3,
+    text,
+  };
+
+  /**存在表达式 */
+  if (text.match(/{{(.*)}}/)) textAst.exp = RegExp.$1.trim();
+
+  /**将AST放到栈顶元素的children属性中 */
+  stack[stack.length - 1].children.push(textAst);
+}
 
 /**
- * 处理属性
+ * 处理v-model指令， 将处理结果直接放到curElement对象身上
+ * @param {*} curElement
  */
-function parseAttrs(attrs) {}
+function processVModel(curElement) {
+  const { tag, rawAttr, attr } = curElement;
+  const { type, "v-model": vModelVal } = rawAttr;
+
+  if (tag === "input") {
+    if (/text/.test(type)) {
+      /**<input type="text" v-model="value" />; */
+      attr.vModel = { tag, type: "text", value: vModelVal };
+    } else if (/checkbox/.test(type)) {
+      /**<input type="checkbox" v-model="value" /> */
+      attr.vModel = { tag, type: "checkbox", vlaue: vModelVal };
+    } else if (tag === "textarea") {
+      /**<textarea v-model="value" /> */
+      attr.vModel = { tag, value: vModelVal };
+    } else if (tag === "select") {
+      /**<select v-model="value"/> */
+      attr.vModel = { tag, value: vModelVal };
+    }
+  }
+}
+
+/**
+ * 处理v-bind指令
+ * @param {*} curElement 当正在处理的AST对象
+ * @param {*} bindKey v-bind:key 中的key
+ * @param {*} bindValue v-bind:key = value 中的value
+ */
+function processVBind(curElement, bindKey, bindValue) {
+  curElement.attr.vBind = { [bindKey]: bindValue };
+}
+
+/**
+ * 处理v-on指令
+ * @param {*} curElement  当正在处理的AST对象
+ * @param {*} vOnKey v-on:key 中的key, 事件类型
+ * @param {*} vOnValue  v-on:key = "value", 事件名
+ */
+function processVOn(curElement, vOnKey, vOnValue) {
+  curElement.attr.vOn = {[vOnKey]: vOnValue}
+}
+
+/**
+ *
+ * @param {*} attrs 属性数组, [id = 'app', xx="xx"]
+ * @returns
+ */
+function parseAttrs(attrs) {
+  const attrMap = {};
+  for (let i = 0, len = attrs.length; i < len; i++) {
+    const attr = attrs[i];
+    const [attrName, attrValue] = attr.split("=");
+    attrMap[attrName] = attrValue.replace(/"/g, "");
+  }
+  return attrMap;
+}
