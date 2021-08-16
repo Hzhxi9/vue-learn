@@ -47,12 +47,68 @@ export default function parse(template) {
    * 解析开始标签
    * <div id="app"></div>
    */
-  function parseStartTag() {}
+  function parseStartTag() {
+    /**先找到开始标签的结束位置 */
+    const end = html.indexOf(">");
+
+    /**解析开始标签里的内容<内容>, 标签名+属性， 比如： div, id="app" */
+    const content = html.slice(1, end);
+
+    /**截取整个html， 将上面解析的内容从html字符串中删除 */
+    html = html.slice(end + 1);
+
+    /**找到第一个空格位置 */
+    const firstSpaceIdx = content.indexOf(" ");
+
+    /**标签名和属性字符串 */
+    let tagName = "",
+      attrsStr = "";
+
+    if (~firstSpaceIdx) {
+      /**
+       * 没有空格，则认为content就是标签名
+       * 比如<h3></h3>,这种情况content = h3
+       **/
+      tagName = content;
+      attrsStr = "";
+    } else {
+      /**截取到开始到第一个空格的位置为标签名 */
+      tagName = content.slice(0, firstSpaceIdx);
+      /**content剩下的内容就是属性， 比如id = "app" xx = "xx" */
+      attrsStr = content.slice(firstSpaceIdx + 1);
+    }
+
+    /**得到属性数组, [id="app", xx="xx"]*/
+    const attrs = attrsStr ? attrsStr.split(" ") : [];
+
+    /**进一步解析属性数组，得到一个map对象 */
+    const attrMap = parseAttrs(attrs);
+
+    /**生成AST对象 */
+    const elementAST = generateAST(tagName, attrMap);
+
+    /**如果根节点不存在，说明当前节点为整个模板的第一个节点 */
+    if (!root) root = elementAST;
+
+    /**
+     * 将ast对象push到栈中
+     * 当遇到结束标签的时候，就将栈顶的AST对象pop出
+     */
+    stack.push(elementAST);
+
+    /**自闭合标签，则直接调用end方法， 进入闭合标签的处理阶段，不入栈 */
+    if (isUnaryTag(tagName)) parseElement();
+  }
 
   /**
-   * 处理结束标签
+   * 处理结束标签 比如<div id="app">...</div>
    */
-  function parseEnd() {}
+  function parseEnd() {
+    /**将结束标签从html字符串中截取掉  */
+    html = html.slice(html.indexOf(">") + 1);
+    /**处理栈顶元素 */
+    parseElement();
+  }
 
   /**
    * 处理元素的闭合标签时会调用该方法
@@ -66,3 +122,8 @@ export default function parse(template) {
  * @param {*} text
  */
 function processChars(text) {}
+
+/**
+ * 处理属性
+ */
+function parseAttrs(attrs) {}
