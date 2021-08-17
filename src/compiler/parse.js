@@ -1,3 +1,5 @@
+import { isUnaryTag } from "../utils";
+
 /**
  * 解析模板字符串生成AST语法树
  * @param {*} template 模板字符串
@@ -22,6 +24,7 @@ export default function parse(template) {
 
     /**匹配开始标签 */
     const startIdx = html.indexOf("<");
+
     if (startIdx === 0) {
       if (html.indexOf("</") === 0) parseEnd() /**当前是闭合标签 */;
       else parseStartTag() /**处理开始标签 */;
@@ -35,7 +38,7 @@ export default function parse(template) {
           html.slice(0, nextStartIdx)
         ) /**栈不为空， 处理这段文本，并将其放置到父元素的children属性中 */;
 
-      html = html.slice(0, nextStartIdx);
+      html = html.slice(nextStartIdx);
     } else {
       /**没有匹配到开始标签， 整个html都为一段文本 */
     }
@@ -64,7 +67,7 @@ export default function parse(template) {
     let tagName = "",
       attrsStr = "";
 
-    if (~firstSpaceIdx) {
+    if (!~firstSpaceIdx) {
       /**
        * 没有空格，则认为content就是标签名
        * 比如<h3></h3>,这种情况content = h3
@@ -132,10 +135,10 @@ export default function parse(template) {
     if (propertyArr.includes("v-model")) {
       /**处理v-model 指令 */
       processVModel(curElement);
-    } else if (propertyArr.find((property) => property.match(/^v-bind:(.*)/))) {
+    } else if (propertyArr.find(property => property.match(/^v-bind:(.*)/))) {
       /**处理v-bind指令， 比如<span v-bind:test="xx"></span> */
-      processVBind(curElement, RegExp.$1, rawAttr[`v-bind:${RegEep.$1}`]);
-    } else if (propertyArr.find((property) => property.match(/^v-on:(.*)/))) {
+      processVBind(curElement, RegExp.$1, rawAttr[`v-bind:${RegExp.$1}`]);
+    } else if (propertyArr.find(property => property.match(/^v-on:(.*)/))) {
       /**处理v-on指令， 比如<button v-on:click="add">add</button> */
       processVOn(curElement, RegExp.$1, rawAttr[`v-on:${RegExp.$1}`]);
     }
@@ -146,27 +149,27 @@ export default function parse(template) {
       curElement.parent = stack[stackLen - 1];
     }
   }
-}
 
-/**
- * 处理文本
- * @param {*} text
- */
-function processChars(text) {
-  /**去除空字符或者换行符 */
-  if (!text.trim()) return;
+  /**
+   * 处理文本
+   * @param {*} text
+   */
+  function processChars(text) {
+    /**去除空字符或者换行符 */
+    if (!text.trim()) return;
 
-  /**构造文本节点的AST */
-  const textAst = {
-    type: 3,
-    text,
-  };
+    /**构造文本节点的AST */
+    const textAst = {
+      type: 3,
+      text,
+    };
 
-  /**存在表达式 */
-  if (text.match(/{{(.*)}}/)) textAst.exp = RegExp.$1.trim();
+    /**存在表达式 */
+    if (text.match(/{{(.*)}}/)) textAst.exp = RegExp.$1.trim();
 
-  /**将AST放到栈顶元素的children属性中 */
-  stack[stack.length - 1].children.push(textAst);
+    /**将AST放到栈顶元素的children属性中 */
+    stack[stack.length - 1].children.push(textAst);
+  }
 }
 
 /**
@@ -183,7 +186,7 @@ function processVModel(curElement) {
       attr.vModel = { tag, type: "text", value: vModelVal };
     } else if (/checkbox/.test(type)) {
       /**<input type="checkbox" v-model="value" /> */
-      attr.vModel = { tag, type: "checkbox", vlaue: vModelVal };
+      attr.vModel = { tag, type: "checkbox", value: vModelVal };
     } else if (tag === "textarea") {
       /**<textarea v-model="value" /> */
       attr.vModel = { tag, value: vModelVal };
@@ -211,7 +214,7 @@ function processVBind(curElement, bindKey, bindValue) {
  * @param {*} vOnValue  v-on:key = "value", 事件名
  */
 function processVOn(curElement, vOnKey, vOnValue) {
-  curElement.attr.vOn = {[vOnKey]: vOnValue}
+  curElement.attr.vOn = { [vOnKey]: vOnValue };
 }
 
 /**
@@ -227,4 +230,17 @@ function parseAttrs(attrs) {
     attrMap[attrName] = attrValue.replace(/"/g, "");
   }
   return attrMap;
+}
+
+function generateAST(tagName, attrMap) {
+  return {
+    /**元素节点 */
+    type: 1,
+    /**标签 */
+    tag: tagName,
+    /**原始属性map对象，后续需要进一步处理 */
+    rawAttr: attrMap,
+    /**子节点 */
+    children: [],
+  };
 }

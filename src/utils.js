@@ -37,3 +37,13 @@ export function def(object, key, value) {
     configurable: true,
   });
 }
+
+/**
+ * 是否为自闭合标签，内置一些自闭合标签，这里简单处理
+ * @param {*} tagName
+ * @returns {boolean}
+ */
+export function isUnaryTag(tagName) {
+  const unaryTags = ["input"];
+  return unaryTags.includes(tagName);
+}
