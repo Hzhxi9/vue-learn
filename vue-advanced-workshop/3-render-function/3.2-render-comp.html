@@ -1,0 +1,32 @@
+<script src="../node_modules/vue/dist/vue.js"></script>
+
+<div id="app">
+  <example :ok="ok"></example>
+  <button @click="ok = !ok">toggle</button>
+</div>
+
+<script>
+const Foo = {
+  render (h) {
+    return h('div', 'foo')
+  }
+}
+
+const Bar = {
+  render (h) {
+    return h('div', 'bar')
+  }
+}
+
+Vue.component('example', {
+  props: ['ok'],
+  render (h) {
+    return h(this.ok ? Foo : Bar)
+  }
+})
+
+new Vue({
+  el: '#app',
+  data: { ok: true }
+})
+</script>
