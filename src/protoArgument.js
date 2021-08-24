@@ -1,34 +1,46 @@
-const arrayProto = Array.prototype;
+const arrayPrototype = Array.prototype;
 
-const arrayMethods = Object.create(arrayProto);
+const arrayMethods = Object.create(arrayPrototype);
 
-const arrayToPatch = [
+const methodsToPatch = [
   "push",
   "pop",
   "unshift",
   "shift",
   "splice",
-  "concat",
   "sort",
+  "reverse",
 ];
 
-arrayToPatch.forEach((method) => {
+methodsToPatch.forEach(method => {
   Object.defineProperty(arrayMethods, method, {
     value: function (...args) {
-      const ret = arrayProto[method].apply(this, args);
+      const ret = arrayPrototype[method].apply(this, args);
+
+      let inserted = [];
+
+      switch (method) {
+        case "push":
+        case "unshift":
+          inserted = args;
+          break;
+        case "splice":
+          inserted = args.splice(2);
+          break;
+      }
+
+      if (inserted.length) this.__ob__.observeArray(inserted);
+
+      this.__ob__.dep.notify();
 
       return ret;
     },
-    configurable: true,
     writable: true,
+    configurable: true,
     enumerable: true,
   });
 });
 
-/**
- * 覆盖数组arr的原型对象
- * @param {*} value
- */
 export default function protoArgument(value) {
   value.__proto__ = arrayMethods;
 }
