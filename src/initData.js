@@ -1,6 +1,6 @@
 import { proxy } from "./utils";
 
-import observe from "./observe";
+import observe from './observe'
 
 export default function initData(vm) {
   const { data } = vm.$options;

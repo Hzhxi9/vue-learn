@@ -1,21 +1,21 @@
-const arrayPrototype = Array.prototype;
+const arrayProto = Array.prototype;
 
-const arrayMethods = Object.create(arrayPrototype);
+const methodProto = Object.create(arrayProto);
 
 const methodsToPatch = [
   "push",
   "pop",
-  "unshift",
   "shift",
+  "unshift",
   "splice",
   "sort",
-  "reverse",
+  "revers",
 ];
 
-methodsToPatch.forEach(method => {
-  Object.defineProperty(arrayMethods, method, {
+methodsToPatch.forEach((method) => {
+  Object.defineProperty(methodProto, method, {
     value: function (...args) {
-      const ret = arrayPrototype[method].apply(this, args);
+      const ret = arrayProto[method].apply(this, args);
 
       let inserted = [];
 
@@ -25,7 +25,7 @@ methodsToPatch.forEach(method => {
           inserted = args;
           break;
         case "splice":
-          inserted = args.splice(2);
+          inserted = args.slice(2);
           break;
       }
 
@@ -37,10 +37,10 @@ methodsToPatch.forEach(method => {
     },
     writable: true,
     configurable: true,
-    enumerable: true,
+    enumerableL: true,
   });
 });
 
-export default function protoArgument(value) {
-  value.__proto__ = arrayMethods;
+export default function protoArgument(arr) {
+  arr.__proto__ = methodProto;
 }

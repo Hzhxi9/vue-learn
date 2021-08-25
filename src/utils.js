@@ -3,8 +3,8 @@ export function proxy(target, sourceKey, key) {
     get() {
       return target[sourceKey][key];
     },
-    set(newValue) {
-      target[sourceKey][key] = newValue;
+    set(value) {
+      target[sourceKey][key] = value;
     },
   });
 }
@@ -12,8 +12,8 @@ export function proxy(target, sourceKey, key) {
 export function def(object, key, value) {
   Object.defineProperty(object, key, {
     value,
-    enumerable: false,
     writable: true,
     configurable: true,
+    enumerable: false,
   });
 }

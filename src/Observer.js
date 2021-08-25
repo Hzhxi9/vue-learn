@@ -1,9 +1,9 @@
-import { def } from "./utils";
-
 import Dep from "./Dep";
-import defineReactive from "./defineReactive";
-import protoArgument from "./protoArgument";
 import observe from "./observe";
+import protoArgument from "./protoArgument";
+import defineReactive from './defineReactive'
+
+import { def } from "./utils";
 
 export default class Observer {
   constructor(value) {
@@ -19,11 +19,11 @@ export default class Observer {
     }
   }
 
-  walk(obj) {
-    for (const key in obj) defineReactive(obj, key, obj[key]);
-  }
-
   observeArray(arr) {
     for (const item of arr) observe(item);
+  }
+
+  walk(object) {
+    for (const key in object) defineReactive(object, key, object[key]);
   }
 }
