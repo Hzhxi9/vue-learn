@@ -1,7 +1,7 @@
 import Dep from "./Dep";
 
 export default class Watcher {
-  constructor(target, exp, cb) {
+  constructor(cb) {
     this._cb = cb;
 
     Dep.target = this;
@@ -10,8 +10,6 @@ export default class Watcher {
 
     Dep.target = null;
   }
-
-  
 
   update() {
     this._cb();
