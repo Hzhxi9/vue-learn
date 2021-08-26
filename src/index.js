@@ -1,5 +1,6 @@
 import initData from "./initData";
 import mount from "./compiler";
+import patch from "./compiler/patch";
 import renderHelper from "./compiler/renderHelper";
 
 function Vue(options) {

@@ -3,6 +3,8 @@ export default function renderHelper(target) {
   target._v = createTextNode;
 }
 
+import VNode  from "./VNode";
+
 /**
  * 根据标签信息创建VNode
  * @param {*} tag
