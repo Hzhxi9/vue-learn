@@ -1,4 +1,5 @@
 import compileToFunction from "./compileToFunction";
+import mountComponent from "./mountComponent";
 
 export default function mount(vm) {
   if (!vm.$options.render) {
@@ -14,4 +15,7 @@ export default function mount(vm) {
     const render = compileToFunction(template);
     vm.$options.render = render;
   }
+
+  /**初次渲染 */
+  mountComponent(vm);
 }
