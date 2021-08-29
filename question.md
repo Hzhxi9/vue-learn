@@ -299,11 +299,31 @@ vue2.x 中使用了虚拟 DOM 进行渲染，侦测数据变化的通知只会�
 
 ### 谈谈你对 keep-alive 的了解？
 
-keep-alive 是 Vue 内置的一个组件，可以使被包含的组件保留状态， 避免重复渲染，其具有以下特性
+keep-alive 是 Vue 内置的一个组件，可以使被包含的组件保留状态， 避免重复渲染，
 
-1. 一般结合路由和动态组件一起使用，用于缓存组件
-2. 提供 include 和 exclude 属性，两者都支持字符串和正则表达式，include 表示只有名称匹配的组件会被缓存，exclude 表示任何名称匹配的组件都不会被缓存，其中 exclude 有优先级比 include 高
-3. 对应两个钩子函数 activated 和 deactivated，当组件被激活时，调用钩子函数 activated，当组件被移除时，触发钩子函数 deactivated
+1. 特性：
+
+   - 一般结合路由和动态组件一起使用，用于缓存组件
+   - 提供 include 和 exclude 属性，两者都支持字符串和正则表达式，include 表示只有名称匹配的组件会被缓存，exclude 表示任何名称匹配的组件都不会被缓存，其中 exclude 有优先级比 include 高
+   - 对应两个钩子函数 activated 和 deactivated，当组件被激活时，调用钩子函数 activated，当组件被移除时，触发钩子函数 deactivated
+
+2. 实现原理
+
+   - 通过 this.$slot.default 拿到插槽组件， 也就说 keep-alive 包裹的组件
+
+   - `getFirstComponentChild`获取第一个子组件，获取该组件的 name(存在组件名则直接组件名， 否则会使用 tag)
+
+   - 将这个 name 通过 include 与 exclude 属性进行配对，匹配不成功(说明不需要进行缓存)则不进行任何操作直接返回 VNode(VNode 节点描述对象，vue 通过 VNode 创建真实 DOM)
+
+   - 匹配到就开始缓存，根据 key 在 this.cache 中查找，如果存在则说明之前已经缓存过了，直接将缓存的 VNode 的 componentInstance(组件实例)覆盖到目前的 VNode 上面。否则将 VNode 存储在 cache 中并且通过 remove(keys, key)将当前的 key 从 keys 中删除在重新 keys.push(key),这样就改变了当前 key 在 keys 中的位置，这个是为了实现 max 的功能并且缓存淘汰策略
+
+   - 如果没有匹配到，说明没有缓存过，这是需要进行缓存，并且判断当前缓存的个数是否超过了 max 指定的个数，如果超过，则销毁 keys 里最后一个组件，并从 keys 中移除，这个就是 LRU(缓存淘汰算法)
+
+   - 最后返回 VNode 或者默认插槽的第一个组件进行 DOM 渲染
+
+3. LRU 的核心思想
+
+   如果数据最近被访问过，那么将来被访问的几率也更高，所以我们将命中缓存的组件 key 重新插入 this.keys 的尾部，这样一来，this.keys 中越往头部的数据即将被访问的几率越低， 所以当缓存数量达到最大值时，我们就删除将来被访问最低的数据，即 this.keys 中第一个缓存的组件
 
 ### 响应式原理
 
@@ -528,6 +548,18 @@ vue 主要通过以下四个步骤来实现数据双向绑定
     用于源码内部的实例方法，负责生成 vnode
 
     关键代码就一行，执行 render 函数生成 vnode, 不过其中加了大量的异常处理代码
+
+### Hook Event
+
+1. 定义
+
+   Vue 的自定义事件结合生命周期钩子实现的一种从组件外部向组件注入额外生命周期方法的功能
+
+2. 实现
+
+   - 处理组件自定义事件的时候(vm.$on)，如果发现组件有 hook:xx 格式的事件(xx 为 Vue 的生命周期函数)，则将 vm.\_hasHookEvent 设置为 true，表示该组件有 HookEvent
+
+   - 在组件生命周期方法被触发的时候， 内部会通过 callHook 方法执行这些生命周期函数，在生命周期函数被执行之后，如果发现 vm.\_hasHookEvent 为 true，则表示当前组件有 HookEvent，通过 vm.$emit('hook:xx')触发 HookEvent 的执行
 
 ### 自定义指令
 
