@@ -348,19 +348,92 @@ v-model 是语法糖，默认情况下相当于:value + @input
 
 如果是自定义组件的话要使用它需要在组件内绑定 props value 并在数据更新数据的时候用$emit('input')，也可以在组件里定义 modal 属性来自定义绑定的属性名和事件名称。 -->
 
-### Vue.use 的实现原理
+### Vue 有哪些全局方法
 
-Vue.use 负责 Vue 安装插件
+1. Vue.use
 
-内部实现流程是
+负责 Vue 安装插件
 
-1. 判断插件是否已经被安装， 如果已经安装则直接结束
-2. 判断 plugin 是对象还是函数
-   - 对象则执行对象的 install 方法安装插件
-   - 函数则直接调用 plugin 方法安装插件
+内部实现流程：
 
-### Vue.mixin
+- 判断插件是否被安装，如果已经被安装则直接结束
 
-负责在 Vue 的全局配置上合并 options 配置，然后在每个组件生产 vnode 时，会将全局配置合并到组件自身的配置上来
+- 判断 plugin 是对象还是函数
 
-实现的核心是 mergeOptions 方法(合并两个选项， 出现相同配置项时，子选项会覆盖夫选项的配置)
+  - 如果是对象就执行对象里的 install 方法安装插件
+  - 如果是函数就直接调用 plugin 方法安装插件
+
+- 将安装好的插件添加到插件列表中
+
+2. Vue.mixin
+
+负责在 Vue 的全局配置上合并 options 配置，然后在每个组件生成 VNode 的时候将全局配置合并到自身的配置上
+
+核心是 mergeOptions
+
+- 标准化 options 上的 props、inject、directive 属性
+- 分别处理 mixin、 extend，然后将他们合并到全局配置上
+- 合并组件 options 和全局 options，若发生冲突，则组件 options 覆盖全局 options
+
+3. Vue.extend
+
+基于 Vue 创建一个子类，给子类同样支持进一步扩展的能力，通过 Vue.extend 去扩展子类，一大用处就是内置了一些公共配置，可以供子类的子类使用
+
+实现流程
+
+- 定义 Vue 子类，创建子类的构造函数，并执行 Vue 的\_init 函数
+- 设置子类原型对象
+- 进行选项合并，合并 Vue 的配置项到自己的配置项上来，如果出现选项冲突，则 options 的选项配置会覆盖全局的配置项
+- 给子类定义全局的 API， 值为 Vue 的全局 API，这样子类同样可以扩展其他子类
+- 最终返回子类
+
+4. Vue.components
+
+负责注册全局组件，将组件配置注册到全局配置的 component 选项上，然后在每个组件的 VNode 生成时会将全局的 components 选项合并到局部的 components 配置项上
+
+实现流程：
+
+- 如果第二个参数为空，则表示获取 compName 的组件构造函数
+
+- 如果 Comp 是组件配置对象，则使用 Vue。extend 方法得到组件构造函数，否则直接进行下一步
+
+- 在全局配置上设置组件信息， this.options.components.compName = CompConstructor
+
+5. Vue.filter
+
+负责在全局注册过滤器，然后每个子组件在生成 VNode 时将全局的 filters 选项合并到局部的 filters 选项中
+
+实现流程：
+
+- 如果没有提供第二个参数， 则获取第一个参数过滤器的回调函数
+- 如果提供了第二个参数，则设置 this.options.filters[第一个参数名] = functions(val)
+
+6. Vue.directive('my-directive',{xx})
+
+负责在全局注册 my-directive 指令，然后在每个组件生成 VNode 的时候将全局的 directives 选项合并到局部的 directives 选项中
+
+- 如果第二个参数为空，则获取指定指令的配置对象
+- 如果不为空且是一个函数的话，则生成配置对象{ bind: 第二个参数， update: 第二个参数 }
+- 然后将指令配置对象设置到全局配置上， this.options.directives['my-directive'] = { xx }
+
+7. Vue.nextTick(cb)
+
+延迟回调函数 cb 的执行，一般用于响应式数据更新时，想立即获取更改后的 DOM 数据
+
+- 触发依赖通知更新时，将负责更新的 watcher 队列放入 watchers 队列
+- 将刷新 watcher 队列的函数放到 callbacks 数组中
+- 在浏览器的异步任务中放入一个刷新 callbacks 数组的方法
+- Vue.nextTick(cb)，将 cb 函数插入到 callbacks 数组中
+- 待将来某个时刻执行刷新 callbacks 数组的函数
+- 然后执行 callbacks 数组中众多的函数，触发 watcher.run， 更新 DOM
+- 由于 cb 函数是在后面放到 callbacks 数组，所以这就保证了先完成的 DOM 更新，在执行 cb 函数
+
+### 自定义指令
+
+一个指令定义对象的钩子函数
+
+1. bind: 只调用一次，指令第一次绑定到元素时调用。在这里可以进行一次性的初始化配置
+2. inserted: 被绑定元素插入到父节点是调用
+3. update: 所在组件的 VNode 更新时调用，但是可能发生在其子 VNode 更新之前，可用通过钩子参数中比较更新前后的值来忽略不必要的目标更新
+4. componentUpdated: 指令所在组件的 VNode 及其子 VNode 全部更新后调用
+5. unbind: 只调用一次，指令与元素解绑时调用
