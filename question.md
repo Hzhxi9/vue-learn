@@ -93,6 +93,14 @@ Vue 并没有完成遵循 MVVM 的思想，在官方文档中也有提及
 8. 使用`provide`、 `inject`，在父组件使用`provide`进行数据注入，在子孙组件中使用`inject`获取数据
 9. 使用`localStorage`数据本地缓存
 
+### 怎样理解 Vue 的单向数据流
+
+数据总是从父组件传到子组件，子组件没有权利修改父组件传过来的值，只能请求父组件对原始数据进行修改
+
+这样防止从子组件意外改变父组件的状态，从而导致应用的数据流向难以理解
+
+如果是在要改变父组件的 props 值， 可以在 data 里面定义一个变量， 并用 props 去初始化它， 之后用$emit 通知父组件去修改
+
 ### vue-router 的模式
 
 1. hash 模式
@@ -218,6 +226,24 @@ v-show 通过 修改 dom 元素的 display 属性来控制元素的显示与隐�
 10. `deactivated`
 
     被 keep-alive 缓存的组件停用时调用
+
+### Vue 的父子组件生命周期钩子函数执行顺序
+
+1. 加载渲染过程
+
+   父 beforeCreate -> 父 created -> 父 beforeMount -> 子 beforeCreate -> 子 created -> 子 beforeMount -> 子 mounted -> 父 mounted
+
+2. 子组件更新过程
+
+   父 beforeUpdate -> 子 beforeUpdate -> 子 updated -> 父 updated
+
+3. 父组件更新过程
+
+   父 beforeUpdate -> 父 updated
+
+4. 销毁过程
+
+   父 beforeDestroy -> 子 beforeDestroy -> 子 destroyed -> 父 destroyed
 
 ### 使用异步更新的原因
 
@@ -563,13 +589,24 @@ vue 主要通过以下四个步骤来实现数据双向绑定
 
 ### 自定义指令
 
-一个指令定义对象的钩子函数
+指令本质上是装饰器， 是 vue 对 HTML 元素的扩展，给 HTML 元素添加自定义功能
+
+vue 编译 DOM 时，会找到指令对象， 执行指令相关的方法
+
+五个生命周期
 
 1. bind: 只调用一次，指令第一次绑定到元素时调用。在这里可以进行一次性的初始化配置
 2. inserted: 被绑定元素插入到父节点是调用
 3. update: 所在组件的 VNode 更新时调用，但是可能发生在其子 VNode 更新之前，可用通过钩子参数中比较更新前后的值来忽略不必要的目标更新
 4. componentUpdated: 指令所在组件的 VNode 及其子 VNode 全部更新后调用
 5. unbind: 只调用一次，指令与元素解绑时调用
+
+原理
+
+1. 在生成 ast 语法树时，遇到指令会给当前元素添加 directives 属性
+2. 通过 genDirectives 生成指令代码
+3. 在 patch 前将指令的钩子提取到 cbs 中， 在 patch 过程中去调用相应的钩子
+4. 当执行指令对应钩子函数时， 调用对应指令定义的方法
 
 ### Vue 的性能优化
 
