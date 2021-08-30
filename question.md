@@ -105,13 +105,22 @@ Vue 并没有完成遵循 MVVM 的思想，在官方文档中也有提及
 
 1. hash 模式
 
-   通过修改#号后面的内容，触发`hashChange`事件，实现路由切换
+   - 通过修改#号后面的内容，触发`hashChange`事件，实现路由切换
+   - #后面 hash 值的变化，不会导致浏览器向服务器发出请求，浏览器不发请求，就不会刷新页面
 
 2. history 模式
 
    通过`pushState`或者`replaceState`事件切换 url，触发`popState`事件，实现路由切换
 
+3. 区别
+
+   - url 展示上， hash 模式有'#', history 模式没有
+   - 兼容性，hash 可以支持低版本浏览器和 IE
+   - 刷新页面时，hash 模式可以正常加载到 hash 对应的页面， 而 history 没有处理的话，会返回 404， 一般需要后端将所有页面都配置重定向到首页路由
+
    因为单页面应用下只有 index 的 html 文件，所以后端如果不进行配合处理的话，会出现 404 的情况
+
+### 路由懒加载是什么意思， 如何实现路由懒加载
 
 ### v-show / v-if
 
@@ -810,6 +819,10 @@ render(存在 render,直接跳过编译阶段,运行 mount 挂载) > template(�
 - checkbox 和 radio 使用 checked 属性和 change 事件；
 
 - select 字段将 value 作为 prop 并将 change 作为事件。
+
+### 为什么不建议用 index 作为 key?
+
+不建议 用 index 作为 key，和没写基本上没区别，因为不管你数组的顺序怎么颠倒，index 都是 0, 1, 2 这样排列，导致 Vue 会复用错误的旧子节点，做很多额外的工作
 
 ### vue3.x 的改动
 
