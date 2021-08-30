@@ -879,48 +879,26 @@ render(存在 render,直接跳过编译阶段,运行 mount 挂载) > template(�
 
 ### vue3.x 的响应式实现原理
 
-1. reactive
+1. 通过 state = reactive(target) 来定义响应式数据(代理 get、set、deleteProperty、has、ownKeys 等操作)
+2. 通过 effect 声明依赖响应式数据的函数 cb ( 例如视图渲染函数 render 函数)，并执行 cb 函数，执行过程中，会触发响应式数据 getter
+3. 在响应式数据 getter 中进行 track 依赖收集：存储响应式数据与更新函数 cb 的映射关系，存储于 targetMap
+4. 当变更响应式数据时，触发 trigger，根据 targetMap 找到关联的 cb 并执行
 
-   设置对象为响应式对象
+### vue3 的 dom diff 与 react 的 dom diff 不同
 
-   接收一个参数，判断这歌参数是否是对象， 不是对象则直接返回这个参数，不做响应式处理
+1. 在前面的 vue3 性能提升的优化点有说过了 vdom 编译优化通过静态节点、静态提升和事件缓存，而在 react 是没有做这个实现的。
 
-   创建拦截器 handler， 设置 get/set/deleteProperty
+2. react 是通过把 vdom 树以链表的结构，利用浏览器的空闲时间来做 diff，也就是时间切片的概念，如果超过了 16ms，有动画或者用户交互的任务，就把主进程控制权还给浏览器，等空闲了继续 diff。用的是 requestIdleCallback 这个浏览器的 api 实现。
 
-   - get
+### Composition Api 与 Vue2.x 使用的 Options Api 有什么区别？
 
-     - 收集依赖
-     - 如果当前 key 的值是对象，则为当前 key 的对象拦截器 handler，设置 get/set/deleteProperty
-     - 如果当前 key 的值不是对象， 则返回当前 key 的值
+1. Options API
 
-   - set
+   - 包含一个描述组件选项(data, methods, props 等)的对象 options
+   - 同一个功能逻辑的代码被拆分到不同选项
+   - 使用 mixin 重用公共代码存在命名冲突，数据来源不清晰的问题
 
-     - 设置的新值和老值不相等时，更新为新值，并触发更新(trigger)
+2. Composition API
 
-   - deleteProperty
-
-     - 当前对象有个 key 的时候，删除这个 key 并触发更新(trigger)
-
-2. effect
-
-   接收一个函数作为参数。 作用是访问响应式对象属性时去收集依赖
-
-3. track
-
-   接收两个参数 target 和 key
-
-   - 如果没有 activeEffect， 则说明没有创建 effect 依赖
-
-   - 如果有 activeEffect， 则去判断 WeakMap 集合中是否有 target 属性
-
-   - WeakMap 集合中没有 target 属性，则 set(target, (depsMap = new Map()))
-
-   - WeakMap 集合中有 target 属性，则判断 target 属性的 map 值的 depsMap 中是否有 key 属性
-
-   - depsMaps 中没有 key 属性，则 set(key, (dep = new Set()))
-
-   - depsMap 中有 key 属性，则添加这个 activeEffect
-
-4. trigger
-
-   判断 WeakMap 中是否有 target 属性，WeakMap 中有 target 属性， 则判断 target 属性中的 map 值中是否有 key 属性，有的话循环收集的 effect()
+   - 基于函数的 API， 可以更灵活的组件组件的逻辑
+   - 解决 Options API 在大型项目中， Options API 不好拆分和重用的问题
