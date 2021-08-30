@@ -810,3 +810,117 @@ render(存在 render,直接跳过编译阶段,运行 mount 挂载) > template(�
 - checkbox 和 radio 使用 checked 属性和 change 事件；
 
 - select 字段将 value 作为 prop 并将 change 作为事件。
+
+### vue3.x 的改动
+
+1. 大的改动
+
+   - proxy 代替了 Object.defineProperty
+   - ts 代替 flow 类型检查
+   - 重构了目录结构，将代码主要分为三个独立的模块，更利于长期维护
+   - 重写 VDom， 优化了编译性能
+   - 支持了 tree shaking
+   - 增加了 composition API(setup), 让代码易于维护
+
+2. 小的改动
+
+   - 异步组件需要 defineAsyncComponent 方法来创建
+   - v-model 的用法
+   - v-if 的优先级高于 v-for
+   - destroy 生命周期选项被重命名为 unmounted
+   - beforeDestroy 生命周期选项被重命名为 beforeUnmounted
+   - render 函数 默认参数 createElement 移除改为全局引入
+   - 组件事件现在需要在 emits 选项中声明
+
+3. 新特性
+
+   - 组合式 API
+   - Teleport
+   - fragment (组件支持多个根节点)
+   - createRenderer(跨平台的自定义渲染器)
+
+### vue3.x 在那些方面提升了性能
+
+通过响应式系统的重写、 编译优化、 源码体积的优化(按需加载) 三个方面提升了性能
+
+1. 响应式系统提升
+
+   vue3.x 中使用了 proxy 全面替换了 Object.defineProperty。
+
+   proxy 是比较新的浏览器特性, 拦截的是整个对象而不是对象的属性， 可以拦截多种方法， 包括属性的访问， 赋值， 删除等操作，不需要在初始化的时候遍历所有属性，并且是懒执行的特性，也就是在访问到的时候才会触发，当访问到对象的属性的时候才会递归代理这个对象属性，所以性能比 vue2.x 有明显的优势
+
+   总结：
+
+   - 可以监听多种操作方法， 包括动态新增的属性和删除属性、has、 apply 等属性
+   - 可以监听数组的索引和 length 等属性
+   - 懒执行，不需要初始化的时候递归遍历
+   - 浏览器新标准， 性能更好， 并且有持续优化的可能
+
+2. 编译优化(虚拟 DOM 优化)
+
+   重写了虚拟 DOM， 其中优化的点包括：编译模版的静态标记， 静态提升， 事件缓存
+
+   - 静态标记
+
+     在对更新的节点进行比对时， 只会去对比带有静态标记的节点， 并且 PatchFlag 枚举定义了十几种类型， 用以更精确的定位需要对比节点的类型
+
+   - 静态提升
+
+     把函数里的某些变量，比如一些不变的节点声明放到外面来， 这样再次执行这个函数的时候就不会重新声明
+
+   - 事件缓存
+
+     默认情况下事件被认为是动态变量，所以每次更新视图的时候都会追踪它的变化
+     但是正常情况下，我们的@click 事件在视图渲染和渲染后， 都是同一个事件，基本上不要要去追踪它的变化， 所以 vue3.x 对此做了相应的优化叫事件监听缓存
+
+3. 源码体积优化
+
+   重构了全局 API 和内部 API，支持了 tree shaking， 任何一个函数，如 ref、 reactive、 computed 等， 仅仅在用到的时候才打包， 没用到的模块都被摇掉， 打包的整体体积变小
+
+### vue3.x 的响应式实现原理
+
+1. reactive
+
+   设置对象为响应式对象
+
+   接收一个参数，判断这歌参数是否是对象， 不是对象则直接返回这个参数，不做响应式处理
+
+   创建拦截器 handler， 设置 get/set/deleteProperty
+
+   - get
+
+     - 收集依赖
+     - 如果当前 key 的值是对象，则为当前 key 的对象拦截器 handler，设置 get/set/deleteProperty
+     - 如果当前 key 的值不是对象， 则返回当前 key 的值
+
+   - set
+
+     - 设置的新值和老值不相等时，更新为新值，并触发更新(trigger)
+
+   - deleteProperty
+
+     - 当前对象有个 key 的时候，删除这个 key 并触发更新(trigger)
+
+2. effect
+
+   接收一个函数作为参数。 作用是访问响应式对象属性时去收集依赖
+
+3. track
+
+   接收两个参数 target 和 key
+
+   - 如果没有 activeEffect， 则说明没有创建 effect 依赖
+
+   - 如果有 activeEffect， 则去判断 WeakMap 集合中是否有 target 属性
+
+   - WeakMap 集合中没有 target 属性，则 set(target, (depsMap = new Map()))
+
+   - WeakMap 集合中有 target 属性，则判断 target 属性的 map 值的 depsMap 中是否有 key 属性
+
+   - depsMaps 中没有 key 属性，则 set(key, (dep = new Set()))
+
+   - depsMap 中有 key 属性，则添加这个 activeEffect
+
+4. trigger
+
+   判断 WeakMap 中是否有 target 属性，WeakMap 中有 target 属性， 则判断 target 属性中的 map 值中是否有 key 属性，有的话循环收集的 effect()
