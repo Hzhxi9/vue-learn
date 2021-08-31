@@ -122,6 +122,48 @@ Vue 并没有完成遵循 MVVM 的思想，在官方文档中也有提及
 
 ### 路由懒加载是什么意思， 如何实现路由懒加载
 
+1. 含义： 把不同路由对应的组件分割成不同的代码块，然后当路由被访问的时候才加载对应组件
+
+2. 实现
+
+   - 结合 Vue 的异步组件和 Webpack 的代码分割功能
+
+     - 可以将异步组件定义为返回一个 Promise 的工厂函数(该函数返回的 Promise 应该 resolve 组件本身)
+
+       ```js
+       const Foo = () =>
+         Promise.resolve({
+           /**组件定义对象 */
+         });
+       ```
+
+     - 在 Webpack2 中， 可以使用动态 import 语法来定义代码分块点
+
+       ```js
+       import("./Foo.vue"); /**返回Promise*/
+       ```
+
+     - 结合这两者，这就是如何定义一个能够被 Webpack 自动代码分割的异步组件
+
+       ```js
+       const Foo = () => import("./Foo.vue");
+       const router = new VueRouter({
+         routes: [{ path: "/foo", component: Foo }],
+       });
+       ```
+
+   - 使用命名 chunk，和 webpack 中的魔法注释就可以把某个路由下的所有组件都打包在同个异步块(chunk)中
+
+     ```js
+     const Foo = () => import(/**webpackChunkName: "group-foo"*/ "./Foo.vue");
+     ```
+
+### Vue-router 导航守卫有哪些
+
+1. 全局前置钩子：beforeEach、beforeResolve、afterEach
+2. 路由独享的守卫： beforeEnter
+3. 组件内的守卫：beforeRouteEnter、beforeRouteUpdate、beforeRouteLeave
+
 ### v-show / v-if
 
 1. v-show
@@ -330,7 +372,19 @@ vue2.x 中使用了虚拟 DOM 进行渲染，侦测数据变化的通知只会�
 1. SSR 就是服务器渲染
 2. 基于 nodejs serve 服务环境进行开发，所有的 html 代码都在服务端渲染
 3. 数据返回给前端，然后前端进行"激活"， 即可成为浏览器识别的 html 代码
-4. SSR 的首次加载很快，有更好的用户体验，更好的 SEO 优化，因为爬虫能看到整个页面的内容，如果是 vue 项目，由于数据还有经过解析，这就造成爬虫并不会等待你的数据加载完成，所以 vue 项目的 SEO 体验并不好
+4. 也就是 Vue 在客户端把标签渲染成 HTML 的工作放在服务端完成，然后再把 html 直接返回给客客户端
+5. SSR 的首次加载很快，有更好的用户体验，更好的 SEO 优化，因为爬虫能看到整个页面的内容，如果是 vue 项目，由于数据还有经过解析，这就造成爬虫并不会等待你的数据加载完成，所以 vue 项目的 SEO 体验并不好
+
+好处
+
+- 更好的 SEO
+- 首屏加载速度更快
+
+缺点
+
+- 开发条件受到限制，服务器端渲染只支持 beforeCreate 和 created 两个钩子
+- 当我们需要一些外部扩展库时需要特殊处理，服务端渲染应用程序也需要处于 Nodejs 运行环境
+- 更多的服务端负载
 
 ### 谈谈你对 keep-alive 的了解？
 
