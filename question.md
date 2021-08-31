@@ -1036,7 +1036,12 @@ render(存在 render,直接跳过编译阶段,运行 mount 挂载) > template(�
 ### key 的作用
 
 1. diff 操作可以更加快速
+
+   利用 key 的唯一性生成 map 对象来获取对应节点，比遍历方式更快
+
 2. diff 操作可以更加准确(避免渲染失误)
+
+   因为带 key 就不是就地复用，在 sameNode 函数 a.key === b.key 对比中可以避免就地复用的情况，所以会更加准确
 
 ### 为什么不建议用 index 作为 key?
 
