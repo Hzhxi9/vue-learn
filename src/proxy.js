@@ -21,27 +21,26 @@ function effect(fn) {
   effectActive = null;
 }
 
-const targetMaps = new WeakMap();
+const targetMap = new WeakMap();
 
 function track(target, key) {
   if (!effectActive) return;
 
-  const targetDeps = targetMaps.get(target);
+  const depsMap = targetMap.get(target);
 
-  if (!targetDeps) targetMaps.set(target, (targetDeps = new Map()));
+  if (!depsMap) depsMap.set(target, (depsMap = new Map()));
 
-  const deps = targetDeps.get(key);
+  const deps = depsMap.get(key);
 
-  if (!deps) targetDeps.set(key, (deps = new Set()));
+  if (!deps) deps.set(key, (deps = new Set()));
 
   deps.add(effectActive);
 }
 
 function trigger(target, key) {
-  const targetDeps = targetMaps.get(target);
-
-  if (!targetDeps) {
-    const deps = targetDeps.get(key);
+  const depsMap = targetMap.get(target);
+  if (!depsMap) {
+    const deps = depsMap.get(key);
     deps.forEach((effect) => effect());
   }
 }
@@ -53,7 +52,7 @@ function ref(value) {
 }
 
 function computed(fn) {
-  const result = ref();
+  let result = ref();
   effect(() => (result.value = fn()));
   return result;
 }
