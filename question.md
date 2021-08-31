@@ -890,6 +890,53 @@ render(存在 render,直接跳过编译阶段,运行 mount 挂载) > template(�
 
 不建议 用 index 作为 key，和没写基本上没区别，因为不管你数组的顺序怎么颠倒，index 都是 0, 1, 2 这样排列，导致 Vue 会复用错误的旧子节点，做很多额外的工作
 
+### Vuex 是什么
+
+vuex 是一个专门为 vue 应用程序开发的状态管理模式，每一个 Vuex 应用的核心就是 store(仓库)
+
+"store"基本就是一个容器， 它包含着你的应用中大部分的状态(state)
+
+- vuex 的状态存储是响应式的。当 Vue 组件从 store 中读取状态的时候，若 store 中的状态发生变化，那么相应的组件也会相应得得到高效更新
+
+- 改变 store 中的状态的唯一途径就是显示提交(commit)mutation, 这样使得我们可以方便地跟踪每一个状态的变化
+
+### vuex 的模块
+
+1. State: 定义了应用状态的数据结构，可以在这里设置默认的初始状态
+
+2. Getter: 允许组件从 State 中获取数据， mapGetters 辅助函数仅仅是将 store 中 getter 映射到局部计算属性
+
+3. Mutation: 是唯一更改 store 中状态的方法，且必须是同步函数
+
+4. Actions: 用于提交 mutation， 而不是直接变更状态， 可以包含任意异步操作
+
+5. Module：允许将单一的 Store 拆分为多个 store 且同时保存在单一的状态树中
+
+### 什么情况下使用 Vuex
+
+1. 如果应用够简单, 最好不要使用 vuex, 一个简单的 store 模式即可
+
+2. 需要构建一个中大型单页应用时，使用 vuex 能更好地在组件外部管理状态
+
+### vuex 中的 mutation 中不能做异步任务
+
+1. vuex 中所有的状态更新的唯一途径都是 mutation，异步操作通过 action 来提交 mutation 实现，这样使得我们可以方便地跟踪每一个状态的变化，从而让我们能够实现一些工具帮助我们更好地了解我们的应用
+
+2. 每个 mutation 执行完成后都会对应到一个新的状态变更， 这样 devtools 就可以打个快照存下来，然后就可以实现 time-travel 了。如果 mutation 支持异步操作，就没有办法知道状态是何时更新的，无法很好的进行状态的追踪，给调试带来困难
+
+### 为什么不直接分发 mutation， 而是通过分发 action 之后提交 mutation 变更状态
+
+1. mutation 必须同步执行， 我们可以在 action 内部执行异步操作
+
+2. 可以进行一系列的异步操作，并且通过提交 mutation 来记录 action 产生的副作用(即状态变更)
+
+### vuex 的 action 有返回值吗？ 返回的是什么？
+
+1. store.dispatch 可以处理被触发的 action 的处理函数返回的 Promise， 并且 store.dispatch 仍旧返回 Promise
+
+2. Action 通常是异步的， 要知道 action 什么时候结束或者组合多个 action 以处理更加复杂的异步流程，可以通知定义 action
+   时返回一个 Promise 对象，就可以在派发 action 的时候就可以通过处理返回的 Promise 处理异步流程
+
 ### vue3.x 的改动
 
 1. 大的改动
