@@ -886,6 +886,8 @@ render(存在 render,直接跳过编译阶段,运行 mount 挂载) > template(�
 
 - select 字段将 value 作为 prop 并将 change 作为事件。
 
+在一个组件上使用 v-model，默认会为组件绑定名为 value 的 props 和名为 input 的事件
+
 ### vue 的修饰符
 
 1. lazy 改变输入框的值时 value 不会改变，当光标离开输入框时，v-model 绑定的值 value 才会改变
